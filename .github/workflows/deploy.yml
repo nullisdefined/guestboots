@@ -3,8 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -28,16 +27,20 @@ jobs:
       - name: Update API URL in script.js
         run: |
           # API Gateway URL을 환경변수나 설정에서 가져와서 업데이트
-          sed -i "s|const API_BASE_URL = 'https://your-api-gateway-url.amazonaws.com/prod';|const API_BASE_URL = '${{ secrets.API_GATEWAY_URL }}';|g" frontend/script.js
+          if [ ! -z "${{ secrets.API_GATEWAY_URL }}" ]; then
+            sed -i "s|const API_BASE_URL = 'https://.*';|const API_BASE_URL = '${{ secrets.API_GATEWAY_URL }}';|g" frontend/script.js
+          fi
+          echo "Updated script.js first 5 lines:"
+          head -5 frontend/script.js
 
       - name: Setup Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v4
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: "./frontend"
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
